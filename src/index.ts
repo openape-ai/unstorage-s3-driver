@@ -1,13 +1,27 @@
 /**
  * @openape/unstorage-s3-driver
- * 
+ *
  * Fork of unstorage's built-in S3 driver with fix for S3-compatible providers
  * that don't send XML prolog (Exoscale SOS, MinIO, etc.)
- * 
+ *
  * Based on unstorage v1.17.4 drivers/s3.mjs
  */
-import { defineDriver, createRequiredError, normalizeKey, createError } from 'unstorage/drivers/utils'
 import { AwsClient } from 'aws4fetch'
+
+// Inlined from unstorage/drivers/utils to avoid dependency resolution issues
+function defineDriver<T>(factory: (opts: T) => any) { return factory }
+function normalizeKey(key: string | undefined, sep = ':') {
+  if (!key) return ''
+  return key.replace(/[:/\\]/g, sep).replace(/^[:/\\]|[:/\\]$/g, '')
+}
+function createError(driver: string, message: string) {
+  const err = new Error(`[unstorage] [${driver}] ${message}`)
+  if ('captureStackTrace' in Error) (Error as any).captureStackTrace(err, createError)
+  return err
+}
+function createRequiredError(driver: string, name: string) {
+  return createError(driver, `Missing required option \`${name}\`.`)
+}
 
 const DRIVER_NAME = 's3-compat'
 
